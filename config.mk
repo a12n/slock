@@ -12,10 +12,14 @@ X11LIB = /usr/X11R6/lib
 
 # includes and libs
 INCS =
-LIBS = -lc -lpam -lX11 -lXrandr
+LIBS = -lc -lX11 -lXrandr
+# LIBS += -lcrypt
+LIBS += -lpam
 
 # flags
-CPPFLAGS += -DVERSION=\"${VERSION}\" -D_DEFAULT_SOURCE -DHAVE_PAM
+CPPFLAGS += -DVERSION=\"${VERSION}\" -D_DEFAULT_SOURCE
+# CPPFLAGS += -DHAVE_SHADOW_H
+CPPFLAGS += -DHAVE_PAM
 CFLAGS += -std=c99 -pedantic -Wall ${INCS} ${CPPFLAGS}
 LDFLAGS += ${LIBS}
 COMPATSRC = explicit_bzero.c
