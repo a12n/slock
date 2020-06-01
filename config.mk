@@ -12,7 +12,7 @@ X11LIB = /usr/X11R6/lib
 
 # includes and libs
 INCS =
-LIBS = -lc -lcrypt -lX11 -lXext -lXrandr
+LIBS = -lc -lcrypt -lX11 -lXrandr
 
 # flags
 CPPFLAGS += -DVERSION=\"${VERSION}\" -D_DEFAULT_SOURCE -DHAVE_SHADOW_H
