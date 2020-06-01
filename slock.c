@@ -24,6 +24,18 @@
 
 char *argv0;
 
+#ifdef HAVE_PAM
+#include <security/pam_appl.h>
+#define PAM_SERVICE_NAME "slock"
+
+static const char *pam_passwd;
+static pam_handle_t *pamh = NULL;
+
+static void pam_init(void);
+static void pam_destroy(void);
+static int pam_auth(const char *passwd);
+#endif
+
 enum {
 	INIT,
 	INPUT,
@@ -163,10 +175,14 @@ readpw(Display *dpy, struct xrandr *rr, struct lock **locks, int nscreens,
 			case XK_Return:
 				passwd[len] = '\0';
 				errno = 0;
+#ifdef HAVE_PAM
+				running = !!pam_auth(passwd);
+#else
 				if (!(inputhash = crypt(passwd, hash)))
 					fprintf(stderr, "slock: crypt: %s\n", strerror(errno));
 				else
 					running = !!strcmp(inputhash, hash);
+#endif
 				if (running) {
 					XBell(dpy, 100);
 					failure = 1;
@@ -342,10 +358,14 @@ main(int argc, char **argv) {
 	dontkillme();
 #endif
 
+#ifdef HAVE_PAM
+	pam_init();
+#else
 	hash = gethash();
 	errno = 0;
 	if (!crypt("", hash))
 		die("slock: crypt: %s\n", strerror(errno));
+#endif
 
 	if (!(dpy = XOpenDisplay(NULL)))
 		die("slock: cannot open display\n");
@@ -394,5 +414,75 @@ main(int argc, char **argv) {
 	/* everything is now blank. Wait for the correct password */
 	readpw(dpy, &rr, locks, nscreens, hash);
 
+#ifdef HAVE_PAM
+	pam_destroy();
+#endif
+
 	return 0;
 }
+
+
+#ifdef HAVE_PAM
+static int pam_conv(int num_msg, const struct pam_message **msg,
+	struct pam_response **resp, void *appdata_ptr)
+{
+	int i;
+
+	*resp = calloc(num_msg, sizeof(**resp));
+	if (*resp == NULL)
+		return PAM_BUF_ERR;
+
+	for (i = 0; i < num_msg; i++) {
+		/* return code is currently not used but should be set to zero */
+		resp[i]->resp_retcode = 0;
+
+		if (msg[i]->msg_style == PAM_PROMPT_ECHO_OFF ||
+		    msg[i]->msg_style == PAM_PROMPT_ECHO_ON)
+			resp[i]->resp = strdup(pam_passwd);
+	}
+
+	return PAM_SUCCESS;
+}
+
+static int pam_auth(const char *passwd)
+{
+	int pamret;
+
+	/* Authenticate user */
+	pam_passwd = passwd;
+	pamret = pam_authenticate(pamh, 0);
+
+	/* Check account status */
+	if (pamret == PAM_SUCCESS)
+		pamret = pam_acct_mgmt(pamh, 0);
+
+	return (pamret == PAM_SUCCESS) ? 0 : 1;
+}
+
+static void pam_init(void)
+{
+	int pamret;
+	struct passwd *pw;
+	struct pam_conv conv = {pam_conv, NULL};
+
+	pw = getpwuid(getuid());
+	if (!pw) {
+		if (errno)
+			die("slock: getpwuid: %s\n", strerror(errno));
+		else
+			die("slock: cannot retrieve username for user ID %d"
+				" from password file entry\n", getuid());
+	}
+
+	/* Start PAM */
+	pamret = pam_start(PAM_SERVICE_NAME, pw->pw_name, &conv, &pamh);
+	if (pamret != PAM_SUCCESS)
+		die("slock: pam_start() failed");
+}
+
+static void pam_destroy(void)
+{
+	/* Close PAM handle */
+	pam_end(pamh, PAM_SUCCESS);
+}
+#endif
