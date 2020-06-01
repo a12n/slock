@@ -326,10 +326,12 @@ int
 main(int argc, char **argv) {
 	struct xrandr rr;
 	struct lock **locks;
+#ifndef HAVE_PAM
 	struct passwd *pwd;
 	struct group *grp;
 	uid_t duid;
 	gid_t dgid;
+#endif  /* HAVE_PAM */
 	const char *hash;
 	Display *dpy;
 	int s, nlocks, nscreens;
@@ -342,6 +344,7 @@ main(int argc, char **argv) {
 		usage();
 	} ARGEND
 
+#ifndef HAVE_PAM
 	/* validate drop-user and -group */
 	errno = 0;
 	if (!(pwd = getpwnam(user)))
@@ -353,6 +356,7 @@ main(int argc, char **argv) {
 		die("slock: getgrnam %s: %s\n", group,
 		    errno ? strerror(errno) : "group entry not found");
 	dgid = grp->gr_gid;
+#endif  /* HAVE_PAM */
 
 #ifdef __linux__
 	dontkillme();
@@ -370,6 +374,7 @@ main(int argc, char **argv) {
 	if (!(dpy = XOpenDisplay(NULL)))
 		die("slock: cannot open display\n");
 
+#ifndef HAVE_PAM
 	/* drop privileges */
 	if (setgroups(0, NULL) < 0)
 		die("slock: setgroups: %s\n", strerror(errno));
@@ -377,6 +382,7 @@ main(int argc, char **argv) {
 		die("slock: setgid: %s\n", strerror(errno));
 	if (setuid(duid) < 0)
 		die("slock: setuid: %s\n", strerror(errno));
+#endif  /* HAVE_PAM */
 
 	/* check for Xrandr support */
 	rr.active = XRRQueryExtension(dpy, &rr.evbase, &rr.errbase);
