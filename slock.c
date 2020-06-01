@@ -417,8 +417,10 @@ main(int argc, char **argv) {
 		}
 	}
 
+	post_lock();
 	/* everything is now blank. Wait for the correct password */
 	readpw(dpy, &rr, locks, nscreens, hash);
+	pre_unlock();
 
 #ifdef HAVE_PAM
 	pam_destroy();
