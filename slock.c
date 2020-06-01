@@ -70,15 +70,18 @@ dontkillme(void)
 	if (!(f = fopen(oomfile, "w"))) {
 		if (errno == ENOENT)
 			return;
-		die("slock: fopen %s: %s\n", oomfile, strerror(errno));
+		fprintf(stderr, "cannot disable the out-of-memory"
+			" killer for this process\n");
+		return;
 	}
 	fprintf(f, "%d", OOM_SCORE_ADJ_MIN);
 	if (fclose(f)) {
 		if (errno == EACCES)
-			die("slock: unable to disable OOM killer. "
-			    "Make sure to suid or sgid slock.\n");
+			fprintf(stderr, "cannot disable the out-of-memory"
+				" killer for this process\n");
 		else
-			die("slock: fclose %s: %s\n", oomfile, strerror(errno));
+			fprintf(stderr, "cannot disable the out-of-memory"
+				" killer for this process\n");
 	}
 }
 #endif
