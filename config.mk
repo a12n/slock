@@ -20,7 +20,7 @@ LIBS += -lpam
 CPPFLAGS += -DVERSION=\"${VERSION}\" -D_DEFAULT_SOURCE
 # CPPFLAGS += -DHAVE_SHADOW_H
 CPPFLAGS += -DHAVE_PAM
-CFLAGS += -std=c99 -pedantic -Wall ${INCS} ${CPPFLAGS}
+CFLAGS += -std=c99 -pedantic -Wall -Os ${INCS} ${CPPFLAGS}
 LDFLAGS += ${LIBS}
 COMPATSRC = explicit_bzero.c
 
