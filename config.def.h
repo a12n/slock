@@ -1,3 +1,5 @@
+#include <X11/XKBlib.h>
+
 /* user and group to drop privileges to */
 static const char *user  = "nobody";
 static const char *group = "nogroup";
@@ -14,6 +16,9 @@ static const int failonclear = 1;
 static void
 post_lock(Display *dpy)
 {
+	if (XkbQueryExtension(dpy, NULL, NULL, NULL, NULL, NULL) > 0) {
+		XkbLockGroup(dpy, XkbUseCoreKbd, XkbGroup1Index);
+	}
 }
 
 static void
