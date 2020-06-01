@@ -12,11 +12,11 @@ static const char *colorname[NUMCOLS] = {
 static const int failonclear = 1;
 
 static void
-post_lock(void)
+post_lock(Display *dpy)
 {
 }
 
 static void
-pre_unlock(void)
+pre_unlock(Display *dpy)
 {
 }
